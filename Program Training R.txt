@@ -1,0 +1,193 @@
+##Import Data Eksternal dan Melihat Isi Data##
+
+#Mengimport file berekstensi csv ke R
+setwd("E:/Training R/")
+datasurvei <- read.csv("Data_Training.csv", sep=";", header=T)
+
+#Mengimport file txt atau yang lain ke R
+datasurvei1 <- read.table("Data_Training.txt", header=TRUE, sep="\t")
+
+#Mengimport file berekstensi xlsx ke R
+install.packages("xlsx", dependencies=TRUE)
+library(xlsx)
+datasurvei2 <- read.xlsx("Data_Training.xlsx", sheetName = "Sheet1")
+
+#Mencetak daftar variabel
+colnames(datasurvei)
+
+#Menampilkan 4 observasi pertama
+head(datasurvei, n=4)
+
+#Mencetak seluruh data
+print(datasurvei)
+datasurvei
+
+#Menampikan data dalam bentuk spreadsheet
+View(datasurvei)
+
+#Menampilkan struktur data
+str(datasurvei)
+
+#Mengakses variabel/kolom
+datasurvei$JK
+datasurvei$Biaya
+datasurvei[,5]
+datasurvei[,c(6,7)]
+
+
+
+##Menampilkan Statistik Deskriptif Numerik##
+
+#Rata-rata
+mean(datasurvei$Biaya)
+
+#Simpangan baku dan ragam
+sd(datasurvei$Usia)
+var(datasurvei$Usia)
+
+#Banyaknya observasi
+nrow(datasurvei)
+length(datasurvei$JK)
+
+#Median
+median(datasurvei$Usia)
+
+#Menginstal package "psych"
+install.packages("psych", dependencies=TRUE)
+library(psych)
+
+#Skewness
+skew(datasurvei$Usia)
+
+#Kurtosis
+kurtosi(datasurvei$Usia)
+
+#Statistik 5 serangkai
+quantile(datasurvei$Usia)
+summary(datasurvei$Usia)
+describe(datasurvei$Usia)
+
+#Statistik berdasarkan grup
+aggregate(datasurvei$Pengeluaran,
+          by=list(datasurvei$JK),
+          FUN=mean)
+aggregate(datasurvei$Pengeluaran,
+          by=list(datasurvei$Pend_Ayah),
+          FUN=mean)
+aggregate(datasurvei$Pengeluaran,
+          by=list(datasurvei$JK, datasurvei$Beasiswa),
+          FUN=mean)
+aggregate(Pengeluaran ~ JK + Beasiswa,
+          FUN=mean, data=datasurvei)
+
+
+
+##Menampilkan Tabel Frekuensi dan Tabulasi Silang Variabel Kategorik##
+
+#Tabel frekuensi
+tabel1 <- table(datasurvei$Beasiswa)
+tabel1
+
+#Proporsi tabel frekuensi
+prop.table(tabel1)
+
+#Tabulasi silang
+tabel2 <- table(datasurvei$Beasiswa, datasurvei$JK,
+                dnn=c("Beasiswa","Jenis Kelamin"))
+tabel2
+
+#Proporsi terhadap total observasi
+prop.table(tabel2)
+
+#Proporsi berdasarkan baris (beasiswa)
+tabel3 <- prop.table(tabel2, margin=1)
+tabel3
+
+#Proporsi berdasarkan kolom (jenis kelamin)
+tabel4 <- prop.table(tabel2, margin=2)
+tabel4
+
+
+
+##Menampilkan Distribusi Data Numerik##
+
+#Histogram
+hist(datasurvei$Kiriman, col="green", breaks=20,
+     xlab="Kiriman", main="Histogram Kiriman")
+hist(datasurvei$Pengeluaran, col="cyan", breaks=25,
+     xlab="Kiriman", main="Histogram Kiriman", freq=FALSE)
+
+#Boxplot
+boxplot(datasurvei$Biaya, col="pink", main="Boxplot Biaya")
+boxplot(datasurvei[,c(8,9)], col=c(4,2), horizontal=TRUE, 
+        main="Boxplot Kiriman dan Pengeluaran")
+boxplot(Biaya ~ JK, data=datasurvei, col=c(3,6),
+        main="Biaya Berdasarkan Jenis Kelamin")
+
+
+
+##Visualisasi Sederhana##
+
+#Barplot satu variabel
+barplot(tabel1, col=6, ylab="Frekuensi", main="Beasiswa")
+
+#Barplot tabulasi silang
+barplot(tabel4,main="Jenis Kelamin vs Beasiswa",
+        xlab="Jenis Kelamin", ylab="Beasiswa",
+        col=c("darkblue","red"))
+
+#Pie-chart
+pie(tabel1, col=c("blue","green"), main="Beasiswa")
+
+
+
+##Uji-t Satu Populasi##
+
+#Uji-t dua arah, alpha=5%
+t.test(datasurvei$Kiriman, alternative="two.sided",
+       mu=950000, conf.level=0.95)
+
+#Uji-t satu arah (H1 lebih besar), alpha=10%
+t.test(datasurvei$Kiriman, alternative="greater",
+       mu=880000, conf.level=0.90)
+
+#Uji-t satu arah (H1 lebih kecil), alpha=10%
+t.test(datasurvei$Kiriman, alternative="less",
+       mu=935000, conf.level=0.90)
+
+
+
+##Uji-t Dua Populasi Saling Bebas##
+
+#Asumsi ragam homogen
+lk <- datasurvei$Pengeluaran[datasurvei$JK=="LAKI-LAKI"]
+pr <- datasurvei$Pengeluaran[datasurvei$JK=="PEREMPUAN"]
+t.test(lk, pr, alternative="two.sided", paired=FALSE,
+       var.equal=TRUE, conf.level=0.95)
+t.test(Pengeluaran ~ JK, data=datasurvei, var.equal=TRUE,
+       conf.level=0.95)
+
+#Asumsi ragam heterogen
+t.test(lk, pr, alternative="two.sided", paired=FALSE,
+       var.equal=FALSE, conf.level=0.95)
+t.test(Pengeluaran ~ JK, data=datasurvei, var.equal=FALSE,
+       conf.level=0.95)
+
+
+
+##One-Way ANOVA dan Post-Hoc Test##
+
+#One-Way ANOVA
+boxplot(Kiriman ~ Pend_Ayah, data=datasurvei,
+        main="Kiriman Berdasarkan Pendidikan Ayah") #secara visual
+anova1 <- aov(Kiriman ~ Pend_Ayah, data=datasurvei) #tolak H0
+summary(anova1)
+
+anova2 <- aov(Kiriman ~ JK, data=datasurvei) #terima H0
+summary(anova2)
+
+#Uji beda nyata terkecil (BNT)
+pairwise.t.test(datasurvei$Kiriman, datasurvei$Pend_Ayah, p.adj="none")
+
+#Uji Tukey/beda nyata jujur (BNJ)
+TukeyHSD(anova1)
